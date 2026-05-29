@@ -1,4 +1,4 @@
-class player:
+class Player:
     def __init__(self):
     # This class represents the player in the game, tracking their resources and progress.
         self.little_lathams: float = 0.0
