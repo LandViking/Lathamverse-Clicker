@@ -1,3 +1,5 @@
+import json
+import os
 from typing import Dict
 from upgrades import Upgrade
 from player import Player
@@ -6,7 +8,7 @@ class GameCore:
     def __init__(self):
         self.player = Player()
         self.upgrades: Dict[str, Upgrade] = self._init_upgrades()
-        self.base_click_power = 1
+        self.base_click_power = 1.0
 
     @property
     def ascension_threshold(self) -> float:
@@ -54,3 +56,23 @@ class GameCore:
                 upgrade.reset()
             return True
         return False
+
+    def save_game(self, filename="savegame.json"):
+        data = {
+            "little_lathams": self.player.little_lathams,
+            "ascensions": self.player.ascensions,
+            "upgrades": {name: upg.level for name, upg in self.upgrades.items()}
+        }
+        with open(filename, "w") as f:
+            json.dump(data, f)
+
+    def load_game(self, filename="savegame.json"):
+        if os.path.exists(filename):
+            with open(filename, "r") as f:
+                data = json.load(f)
+                self.player.little_lathams = data.get("little_lathams", 0.0)
+                self.player.ascensions = data.get("ascensions", 0)
+                saved_upgrades = data.get("upgrades", {})
+                for name, level in saved_upgrades.items():
+                    if name in self.upgrades:
+                        self.upgrades[name].level = level
