@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from typing import Dict
 from upgrades import Upgrade
 from player import Player
@@ -9,10 +10,17 @@ class GameCore:
         self.player = Player()
         self.upgrades: Dict[str, Upgrade] = self._init_upgrades()
         self.base_click_power = 1.0
+        
+        # Anti-autoclicker variables
+        self.last_click_time = 0.0
+        self.click_cooldown = 0.05 
+        
+        # Offline progress tracking
+        self.offline_time_seconds = 0.0
+        self.offline_lathams_gained = 0.0
 
     @property
     def ascension_threshold(self) -> float:
-        # The amount of little lathams needed to perform an ascension, increasing with each ascension.
         return 100000 * (1.5 ** self.player.ascensions)
 
     def _init_upgrades(self) -> dict[str, Upgrade]:
@@ -34,8 +42,13 @@ class GameCore:
         upgrade_bonus = sum(upg.total_bonus for upg in self.upgrades.values() if upg.effect_type == "idle")
         return upgrade_bonus * self.player.ascensions_multiplier
     
-    def click(self):
-        self.player.little_lathams += self.current_click_power
+    def click(self) -> bool:
+        current_time = time.time()
+        if current_time - self.last_click_time >= self.click_cooldown:
+            self.player.little_lathams += self.current_click_power
+            self.last_click_time = current_time
+            return True
+        return False
         
     def idle(self, delta_time: float):
         self.player.little_lathams += self.current_idle_power * delta_time
@@ -61,12 +74,13 @@ class GameCore:
         data = {
             "little_lathams": self.player.little_lathams,
             "ascensions": self.player.ascensions,
-            "upgrades": {name: upg.level for name, upg in self.upgrades.items()}
+            "upgrades": {name: upg.level for name, upg in self.upgrades.items()},
+            "last_save_time": time.time() # Save the exact time the game closes
         }
         with open(filename, "w") as f:
             json.dump(data, f)
 
-    def load_game(self, filename="savegame.json"):
+    def load_game(self, filename="savegame.json") -> bool:
         if os.path.exists(filename):
             with open(filename, "r") as f:
                 data = json.load(f)
@@ -76,3 +90,15 @@ class GameCore:
                 for name, level in saved_upgrades.items():
                     if name in self.upgrades:
                         self.upgrades[name].level = level
+                
+                # Calculate offline progress
+                saved_time = data.get("last_save_time", time.time())
+                current_time = time.time()
+                self.offline_time_seconds = max(0, current_time - saved_time)
+                
+                # Multiply time away by the newly loaded idle power
+                self.offline_lathams_gained = self.offline_time_seconds * self.current_idle_power
+                self.player.little_lathams += self.offline_lathams_gained
+                
+            return True # Successfully loaded
+        return False # No save found
