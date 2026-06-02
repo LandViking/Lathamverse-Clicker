@@ -6,7 +6,7 @@ class GameCore:
     def __init__(self):
         self.player = Player()
         self.upgrades: Dict[str, Upgrade] = self._init_upgrades()
-        self.base_click_power = 1.0
+        self.base_click_power = 1
 
     @property
     def ascension_threshold(self) -> float:
