@@ -3,11 +3,14 @@ class Player:
     # This class represents the player in the game, tracking their resources and progress.
         self.little_lathams: float = 0
         self.ascensions: int = 0
+        self.ascension_points: int = 0  # Permanent currency earned on ascension
+        self.total_lathams_earned: float = 0  # All-time stat for tracking
         
     @property
     # The ascensions_multiplier property calculates the multiplier for little lathams based on the number of ascensions.
     def ascensions_multiplier(self) -> float:
-        return 1 + (self.ascensions * 0.5)    
+        # Exponential scaling: 1.5^ascensions gives meaningful power growth per ascension
+        return 1.5 ** self.ascensions
     
     def ascension_reset(self):
     # This method resets the player's progress when they perform an ascension, granting them a boost in little lathams per second.

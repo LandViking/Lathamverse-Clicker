@@ -1,10 +1,11 @@
 class Upgrade:
-    def __init__(self, name: str, base_cost: float, scaling: float, effect_type: str, base_power: float):
+    def __init__(self, name: str, base_cost: float, scaling: float, effect_type: str, base_power: float, required_ascensions: int = 0):
         self.name = name
         self.base_cost = base_cost
         self.scaling = scaling
         self.effect_type = effect_type #click or idle
         self.base_power = base_power
+        self.required_ascensions = required_ascensions  # Ascension count needed to unlock
         self.level = 0
         
     @property
